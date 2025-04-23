@@ -23,6 +23,22 @@ def ielasi(filename):
     df = pd.read_csv(filename, sep='\t', decimal=',', encoding='utf-8-sig')
     return df
 
+def shoelace_area(x, y):
+    return 0.5 * np.abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+
+def polygon_centroid(x, y):
+    # Make sure the polygon is closed
+    if x[0] != x[-1] or y[0] != y[-1]:
+        x = np.append(x, x[0])
+        y = np.append(y, y[0])
+
+    A = 0.5 * (np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+
+    Cx = (1 / (6 * A)) * np.sum((x + np.roll(x, -1)) * (x * np.roll(y, -1) - np.roll(x, -1) * y))
+    Cy = (1 / (6 * A)) * np.sum((y + np.roll(y, -1)) * (x * np.roll(y, -1) - np.roll(x, -1) * y))
+
+    return Cx, Cy
+
 def Spied_tilp(x_col,y_col):
     saraksts, temp = katrs()
 
@@ -34,10 +50,28 @@ def Spied_tilp(x_col,y_col):
     axs = axs.flatten()  # make it easy to index
 
     for i, df in enumerate(saraksts):
-        axs[i].plot(df[x_col], df[y_col], label=f'Dataset {i+1}')
-        axs[i].set_title(f'Dataset {i+1}')
-        axs[i].set_xlabel('Time (s)')
-        axs[i].set_ylabel('Pressure (kPa)')
+        temperaturas = temp[i]
+        auksts = int(temperaturas[0])
+        karsts = int(temperaturas[1])
+
+        x = df[x_col].to_numpy()
+        y = df[y_col].to_numpy()
+
+        # Sort by x to keep the polygon clean
+        x_closed = np.append(x, x[0])
+        y_closed = np.append(y, y[0])
+
+        area = shoelace_area(x_closed, y_closed)
+
+        axs[i].fill(x_closed, y_closed, color='lightgreen', alpha=0.4, label='Polygon Area')
+
+        centroid_x, centroid_y = polygon_centroid(x_closed, y_closed)
+        axs[i].text(centroid_x, centroid_y, f"Darbs:{area:.2f}kJ", fontsize=12, fontweight='bold', color='darkgreen', ha='center', va='center')
+
+        axs[i].plot(df[x_col], df[y_col], color = 'darkgreen')
+        axs[i].set_title(f'Siltā ūdens temp: {karsts}°C,\n aukstā ūdens temp: {auksts}°C,\n ΔT: {karsts-auksts}°C')
+        axs[i].set_xlabel('Pozīcija (m)')
+        axs[i].set_ylabel('Spiediens (kPa)')
         axs[i].grid(True)
 
     # Hide any unused subplots
