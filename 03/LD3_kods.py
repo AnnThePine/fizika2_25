@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+tilp = lambda h0,h: 3.14*0.112*(0.04626/2)**2+3.14*(h0+h)*(0.0325/2)**2
+
+sar1 = [33,35,35,35,39,37,38,38]
+sar2 = [18,19,13,19,20,20,27,27]
+
 def katrs(): 
     saraksts = []
     temperaturas = []
@@ -13,6 +18,7 @@ def katrs():
         df = df.drop(columns=["Time (s) Run #1", "Angle (rad) Run #1","Angular Velocity (rad/s) Run #1","Angular Acceleration (rad/s²) Run #1","Velocity (m/s) Run #1","Acceleration (m/s²) Run #1","Temperature, Ch P3 (°C) Run #1", "Temperature, Ch P2 (°C) Run #1"])
         df = df.dropna()
         df.reset_index(drop=True, inplace=True)
+        df['tilpums'] = tilp(sar1[i-1],df['Position (m) Run #1'])
         saraksts.append(df)
 
     return saraksts, temperaturas
@@ -61,16 +67,16 @@ def Spied_tilp(x_col,y_col):
         x_closed = np.append(x, x[0])
         y_closed = np.append(y, y[0])
 
-        area = shoelace_area(x_closed, y_closed)
+        area = shoelace_area(x_closed, y_closed)*1000
 
         axs[i].fill(x_closed, y_closed, color='lightgreen', alpha=0.4, label='Polygon Area')
 
         centroid_x, centroid_y = polygon_centroid(x_closed, y_closed)
-        axs[i].text(centroid_x, centroid_y, f"Darbs:{area:.2f}kJ", fontsize=12, fontweight='bold', color='darkgreen', ha='center', va='center')
+        axs[i].text(centroid_x, centroid_y, f"Darbs:{area:.3f}J", fontsize=12, fontweight='bold', color='darkgreen', ha='center', va='center')
 
         axs[i].plot(df[x_col], df[y_col], color = 'darkgreen')
         axs[i].set_title(f'Siltā ūdens temp: {karsts}°C,\n aukstā ūdens temp: {auksts}°C,\n ΔT: {karsts-auksts}°C')
-        axs[i].set_xlabel('Pozīcija (m)')
+        axs[i].set_xlabel('Tilpums (m^3)')
         axs[i].set_ylabel('Spiediens (kPa)')
         axs[i].grid(True)
 
@@ -82,5 +88,5 @@ def Spied_tilp(x_col,y_col):
     plt.show()
 
 # Call the plot function
-Spied_tilp("Position (m) Run #1",'Absolute Pressure (kPa) Run #1')
+Spied_tilp('tilpums','Absolute Pressure (kPa) Run #1')
 
